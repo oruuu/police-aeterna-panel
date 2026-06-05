@@ -5,6 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import {
   Activity,
   BarChart3,
+  CheckCircle2,
   ClipboardList,
   Database,
   Edit3,
@@ -21,6 +22,7 @@ import {
   UserCog,
   UserRound,
   Users,
+  XCircle,
 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -36,7 +38,7 @@ type Member = {
   pangkat: string;
   divisi: string;
   role: Role;
-  status: 'ACTIVE' | 'SUSPENDED' | 'OFF_DUTY';
+  status: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | 'OFF_DUTY';
 };
 type Audit = { id?: string; actor_name: string; action: string; target: string; detail: string; created_at?: string };
 
@@ -45,15 +47,68 @@ const defaultPasal: Pasal[] = [
   { kode: '1.2', tentang: 'Melakukan Penipuan Terhadap Warga', denda: 2000, bulan: 5, kategori: 'Ringan' },
   { kode: '1.3', tentang: 'Melakukan Pemalakan Terhadap Warga', denda: 2000, bulan: 5, kategori: 'Ringan' },
   { kode: '1.4', tentang: 'Memberi Informasi Palsu Kepada Petugas Kepolisian', denda: 4000, bulan: 10, kategori: 'Ringan' },
+  { kode: '1.5', tentang: 'Pencemaran Nama Baik', denda: 4000, bulan: 5, kategori: 'Ringan' },
+  { kode: '1.6', tentang: 'Pencemaran Nama Baik Kepada Instansi', denda: 5000, bulan: 10, kategori: 'Ringan' },
+  { kode: '1.7', tentang: 'Menyalahgunakan Panggilan Hotline / Emergency Call', denda: 5000, bulan: 5, kategori: 'Ringan' },
+  { kode: '1.8', tentang: 'Menghambat Penyelidikan', denda: 3000, bulan: 5, kategori: 'Ringan' },
+  { kode: '1.9', tentang: 'Mabuk Di Tempat Umum', denda: 2000, bulan: 5, kategori: 'Ringan' },
+  { kode: '1.0', tentang: 'Melakukan Perkelahian Di Tempat Umum', denda: 3000, bulan: 5, kategori: 'Ringan' },
+  { kode: '2.0', tentang: 'Mengganggu Ketertiban Umum / Melakukan Provokasi', denda: 4000, bulan: 5, kategori: 'Ringan' },
+  { kode: '2.1', tentang: 'Tidak Melengkapi Atribut Berkendara', denda: 2000, bulan: 5, kategori: 'Ringan' },
+  { kode: '2.2', tentang: 'Memakai Hal Yang Tidak Senonoh Di Area Publik', denda: 3000, bulan: 5, kategori: 'Ringan' },
+  { kode: '2.4', tentang: 'Melakukan Sifat Tidak Senonoh Di Area Publik / Keramaian', denda: 3000, bulan: 5, kategori: 'Ringan' },
+  { kode: '2.5', tentang: 'Melakukan Aksi Demo Tanpa Izin', denda: 4000, bulan: 10, kategori: 'Ringan' },
+  { kode: '2.6', tentang: 'Melakukan Aksi Anarkis Saat Melakukan Demo', denda: 4000, bulan: 5, kategori: 'Ringan' },
+  { kode: '2.7', tentang: 'Menghalangi / Menghambat Petugas Instansi (Dalam Pengejaran)', denda: 3000, bulan: 10, kategori: 'Ringan' },
+  { kode: '2.8', tentang: 'Mencuri Kendaraan Warga', denda: 2000, bulan: 5, kategori: 'Ringan' },
   { kode: '2.9', tentang: 'Mengkonsumsi Narkoba / Narkotika', denda: 5000, bulan: 10, kategori: 'Ringan' },
   { kode: '3.0', tentang: 'Penganiayaan / Pemukulan Terhadap Warga', denda: 5000, bulan: 10, kategori: 'Sedang' },
-  { kode: '3.8', tentang: 'Membawa Narkoba Dan Narkotika', denda: 6000, bulan: 15, kategori: 'Sedang' },
+  { kode: '3.1', tentang: 'Melakukan Pembegalan Terhadap Warga', denda: 5000, bulan: 10, kategori: 'Sedang' },
+  { kode: '3.3', tentang: 'Upaya Suap / Penyuapan Kepada Petugas', denda: 6000, bulan: 10, kategori: 'Sedang' },
+  { kode: '3.4', tentang: 'Berada Di Zona Ilegal / Merah', denda: 5000, bulan: 10, kategori: 'Sedang' },
+  { kode: '3.5', tentang: 'Menyalahgunakan Atribut Kepolisian', denda: 4000, bulan: 10, kategori: 'Sedang' },
+  { kode: '3.6', tentang: 'Melakukan Perburuan Hewan Ilegal', denda: 5000, bulan: 10, kategori: 'Sedang' },
+  { kode: '3.7', tentang: 'Membawa Minuman Beralkohol (Beer / Whiskey)', denda: 5000, bulan: 10, kategori: 'Sedang' },
+  { kode: '3.8', tentang: 'Membawa Narkoba Dan Narkotika (Marijuana & Kanabis)', denda: 6000, bulan: 15, kategori: 'Sedang' },
+  { kode: '3.9', tentang: 'Membawa Barang Ilegal (Kavlar, Linggis, Dan Kunci Letter T)', denda: 6000, bulan: 5, kategori: 'Sedang' },
+  { kode: '3.9A', tentang: 'Membawa Hewan Yang Dilindungi (Hiu, Paus, Kadal, Dan Penyu)', denda: 6000, bulan: 5, kategori: 'Sedang' },
+  { kode: '4.0', tentang: 'Kepemilikan Barang Ilegal (Uranium ACD & Uranium)', denda: 6000, bulan: 5, kategori: 'Sedang' },
+  { kode: '4.1', tentang: 'Membawa Uang Merah $1 - $1.000', denda: 6000, bulan: 5, kategori: 'Sedang' },
+  { kode: '4.2', tentang: 'Membawa Uang Merah $1.000 - $50.000', denda: 8000, bulan: 5, kategori: 'Sedang' },
+  { kode: '4.4', tentang: 'Membawa Uang Merah $50.000 - $1.000.000', denda: 9000, bulan: 15, kategori: 'Sedang' },
+  { kode: '4.5', tentang: 'Pencucian Uang Merah', denda: 6000, bulan: 10, kategori: 'Sedang' },
   { kode: '4.6', tentang: 'Pencurian Kendaraan Ilegal / Carsteal', denda: 5000, bulan: 5, kategori: 'Sedang' },
+  { kode: '4.7', tentang: 'Smuggler / Penyelundupan Barang Ilegal', denda: 5000, bulan: 10, kategori: 'Sedang' },
+  { kode: '4.8', tentang: 'Melakukan Proses Narkoba Dan Narkotika', denda: 5000, bulan: 5, kategori: 'Sedang' },
+  { kode: '4.9', tentang: 'Melakukan Tindakan Kabur Dari Federal', denda: 5000, bulan: 10, kategori: 'Sedang' },
+  { kode: '5.0', tentang: 'Pengedaran Terhadap Barang Ilegal (Kavlar, Marijuana, Kanabisa, Dsb.)', denda: 10000, bulan: 15, kategori: 'Sedang' },
+  { kode: '5.1', tentang: 'Sengaja Atau Tidak Sengaja Berada Di TKP Peperangan', denda: 6000, bulan: 5, kategori: 'Sedang' },
+  { kode: '5.2', tentang: 'Upaya Melakukan Perlawanan Terhadap Petugas', denda: 8000, bulan: 10, kategori: 'Sedang' },
   { kode: '5.3', tentang: 'Pengedaran Senjata Api Ilegal', denda: 8000, bulan: 20, kategori: 'Berat' },
-  { kode: '5.7', tentang: 'Kepemilikan Laras Panjang / Sniper Ilegal', denda: 20000, bulan: 20, kategori: 'Berat' },
+  { kode: '5.4', tentang: 'Kepemilikan Senjata Api Ilegal (Handgun / Pistol)', denda: 8000, bulan: 10, kategori: 'Berat' },
+  { kode: '5.5', tentang: 'Kepemilikan Senjata Api Ilegal (Laras Pendek / SMG)', denda: 9000, bulan: 10, kategori: 'Berat' },
+  { kode: '5.6', tentang: 'Kepemilikan Senjata Api Ilegal (Laras Menengah / AK-47, Dsb.)', denda: 10000, bulan: 15, kategori: 'Berat' },
+  { kode: '5.7', tentang: 'Kepemilikan Senjata Api Ilegal (Laras Panjang / Sniper)', denda: 20000, bulan: 20, kategori: 'Berat' },
+  { kode: '5.8', tentang: 'Membuat / Merakit Senjata Api Ilegal', denda: 9000, bulan: 5, kategori: 'Berat' },
+  { kode: '5.9', tentang: 'Tidak Memiliki Lisensi Senjata Api Resmi Kepolisian', denda: 7000, bulan: 5, kategori: 'Berat' },
+  { kode: '6.0', tentang: 'Melakukan Tindakan Penyanderaan Kepada Warga', denda: 7000, bulan: 10, kategori: 'Berat' },
+  { kode: '6.1', tentang: 'Melakukan Tindakan Penyanderaan Kepada Petugas Kepolisian', denda: 8000, bulan: 15, kategori: 'Berat' },
+  { kode: '6.2', tentang: 'Melakukan Tindakan Penyanderaan Kepada Anggota Instansi', denda: 8000, bulan: 15, kategori: 'Berat' },
+  { kode: '6.3', tentang: 'Upaya Pembunuhan Kepada Warga Maupun Petugas Kepolisian', denda: 9000, bulan: 10, kategori: 'Berat' },
+  { kode: '6.4', tentang: 'Melakukan Penodongan Terhadap Warga', denda: 8000, bulan: 10, kategori: 'Berat' },
+  { kode: '6.5', tentang: 'Melakukan Penodongan Terhadap Petugas Kepolisian', denda: 8000, bulan: 15, kategori: 'Berat' },
+  { kode: '6.6', tentang: 'Melakukan Penembakan Kepada Warga', denda: 8000, bulan: 15, kategori: 'Berat' },
+  { kode: '6.7', tentang: 'Melakukan Penembakan Kepada Petugas Kepolisian', denda: 8000, bulan: 10, kategori: 'Berat' },
   { kode: '6.8', tentang: 'Perampokan Warung Bersenjata', denda: 8000, bulan: 15, kategori: 'Berat' },
-  { kode: '7.4', tentang: 'Perampokan Bank', denda: 10000, bulan: 20, kategori: 'Berat' },
-  { kode: '7.7', tentang: 'Korupsi Instansi', denda: 0, bulan: 999, kategori: 'Persidangan' },
+  { kode: '6.9', tentang: 'Peperangan Antar Kelompok', denda: 8000, bulan: 10, kategori: 'Berat' },
+  { kode: '7.0', tentang: 'Tindakan Mencoba Menjadi Polisi Gadungan Atau Instansi Lainnya', denda: 9000, bulan: 25, kategori: 'Berat' },
+  { kode: '7.1', tentang: 'Upaya Menghilangkan Barang Bukti', denda: 7000, bulan: 10, kategori: 'Berat' },
+  { kode: '7.2', tentang: 'Upaya Penculikan Terhadap Warga Maupun Anggota Instansi', denda: 10000, bulan: 15, kategori: 'Berat' },
+  { kode: '7.3', tentang: 'Melakukan Atau Mencoba Membantu Kriminalisme', denda: 20000, bulan: 15, kategori: 'Berat' },
+  { kode: '7.4', tentang: 'Melakukan Perampokan Bank', denda: 10000, bulan: 20, kategori: 'Berat' },
+  { kode: '7.5', tentang: 'Melakukan Perampokan Bank Besar', denda: 15000, bulan: 25, kategori: 'Berat' },
+  { kode: '7.6', tentang: 'Perampokan Jawery', denda: 9000, bulan: 15, kategori: 'Berat' },
+  { kode: '7.7', tentang: 'Melakukan Tindakan Korupsi Instansi', denda: 0, bulan: 999, kategori: 'Persidangan' },
 ];
 
 const defaultCodes: Code[] = [
@@ -64,13 +119,48 @@ const defaultCodes: Code[] = [
   { kode: '3-1', arti: 'Kasus Pembegalan' },
   { kode: '3-1P', arti: 'Kasus Perampokan' },
   { kode: '3-2', arti: 'Kasus Peperangan' },
+  { kode: '3-3', arti: 'Kualitas suara jelek' },
+  { kode: '3-3L', arti: 'Kecelakaan korban luka' },
+  { kode: '3-3M', arti: 'Kecelakaan korban material' },
+  { kode: '3-3K', arti: 'Kecelakaan korban meninggal' },
+  { kode: '3-3KA', arti: 'Kecelakaan kereta api' },
+  { kode: '3-4-K', arti: 'Kecelakaan, korban meninggal, pelaku melarikan diri' },
+  { kode: '4-4', arti: 'Penerimaan jelek' },
+  { kode: '5-5', arti: 'Penerimaan baik' },
+  { kode: '8-3', arti: 'Visual hilang / lost visual / VSB' },
+  { kode: '8-4', arti: 'Tersangka pengejaran turun dari kendaraan' },
+  { kode: '8-5', arti: 'Unit GARUDA silahkan mengudara / berhenti mengudara' },
   { kode: '8-6', arti: 'Dimengerti' },
+  { kode: '8-7', arti: 'Tersangka pengejaran ditemukan kembali' },
+  { kode: '8-8', arti: 'Melamun' },
+  { kode: '8-9', arti: 'Pesawat / helikopter mengalami kerusakan' },
+  { kode: '8-1-0', arti: 'Izin off duty' },
+  { kode: '8-1-1', arti: 'Izin on duty' },
+  { kode: '8-1-2', arti: 'Selamat beristirahat' },
+  { kode: '8-1-3', arti: 'Selamat bertugas' },
+  { kode: '10-1', arti: 'Semua unit harap berkumpul di ...' },
   { kode: '10-2', arti: 'Menanyakan posisi / menginformasikan posisi' },
+  { kode: '10-3', arti: 'Keluar radio' },
   { kode: '10-4', arti: 'Diterima / roger that' },
+  { kode: '10-5', arti: 'Menghadap secara pribadi' },
+  { kode: '10-6', arti: 'Saya sedang melakukan pekerjaan yang lain' },
+  { kode: '10-7', arti: 'Terjadi kerusakan terhadap kendaraan' },
+  { kode: '10-8', arti: 'Sedang dalam perjalanan menuju ...' },
+  { kode: '10-9', arti: 'Mohon pesan diulang' },
+  { kode: '10-10', arti: 'Mohon bantuan jemputan' },
+  { kode: '10-11', arti: 'Kembali ke kantor polisi' },
+  { kode: '10-12', arti: 'Mohon pindah frekuensi radio ke channel ...' },
   { kode: '10-13', arti: 'Anggota terlumpuhkan' },
-  { kode: '10-200', arti: 'Membutuhkan backup polisi di ...' },
-  { kode: '10-700', arti: 'Membutuhkan medis di ...' },
+  { kode: '10-16', arti: 'Mempercepat aktivitas' },
+  { kode: '10-51', arti: 'Indikasi terjadi kejahatan' },
+  { kode: '10-61', arti: 'Anggota dipersilahkan melumpuhkan suspek' },
+  { kode: '10-71', arti: 'Terjadi penembakan terhadap anggota' },
   { kode: '10-999', arti: 'Peperangan besar / naikkan ke Siaga 1' },
+  { kode: '10-333', arti: 'Penyanderaan anggota kepolisian / sesuai aturan penyanderaan' },
+  { kode: '10-000', arti: 'Terorisme / Siaga 3' },
+  { kode: '10-200', arti: 'Membutuhkan backup polisi di ...' },
+  { kode: '10-500', arti: 'Membutuhkan provost di ...' },
+  { kode: '10-700', arti: 'Membutuhkan medis di ...' },
 ];
 
 const roles: Role[] = ['SUPER_ADMIN', 'KAPOLRI', 'WAKAPOLRI', 'COMMAND', 'PROVOST', 'OFFICER', 'CADET'];
@@ -150,7 +240,7 @@ export default function Page() {
       pangkat: 'Cadet',
       divisi: 'Patrol',
       role: (count || 0) === 0 ? 'SUPER_ADMIN' : 'CADET',
-      status: 'ACTIVE',
+      status: (count || 0) === 0 ? 'ACTIVE' : 'PENDING',
     };
     await supabase.from('members').insert(firstMember);
     setMyProfile(firstMember);
@@ -235,10 +325,29 @@ export default function Page() {
     await loadDb();
   }
 
+  async function approveMember(member: Member) {
+    if (!member.id) return;
+    if (!canManage(myProfile?.role)) return alert('Akses ditolak. Minimal COMMAND.');
+    const approved = { ...member, status: 'ACTIVE' as Member['status'], role: member.role === 'CADET' ? 'OFFICER' as Role : member.role };
+    if (supabase) await supabase.from('members').update({ status: approved.status, role: approved.role }).eq('id', member.id);
+    await addAudit('APPROVE_ACCOUNT', 'members', `Akun ${member.discord_name || member.nama_rp} di-ACC sebagai ${approved.role}`);
+    await loadDb();
+  }
+
+  async function rejectMember(member: Member) {
+    if (!member.id) return;
+    if (!canManage(myProfile?.role)) return alert('Akses ditolak. Minimal COMMAND.');
+    if (!confirm('Tolak/suspend akun ini?')) return;
+    if (supabase) await supabase.from('members').update({ status: 'SUSPENDED' }).eq('id', member.id);
+    await addAudit('REJECT_ACCOUNT', 'members', `Akun ${member.discord_name || member.nama_rp} ditolak / suspended`);
+    await loadDb();
+  }
+
   const filtered = pasal.filter((p) => (p.kode + ' ' + p.tentang + ' ' + p.kategori).toLowerCase().includes(q.toLowerCase()));
   const total = useMemo(() => picked.reduce((a, p) => ({ denda: a.denda + p.denda, bulan: a.bulan + p.bulan }), { denda: 0, bulan: 0 }), [picked]);
   const officerCount = members.filter((m) => m.status === 'ACTIVE').length;
   const highCases = pasal.filter((p) => p.kategori === 'Berat' || p.kategori === 'Persidangan').length;
+  const pendingMembers = members.filter((m) => m.status === 'PENDING');
 
   return (
     <main className="min-h-screen bg-grid bg-[#050914] text-slate-100">
@@ -274,6 +383,16 @@ export default function Page() {
           </section>
         )}
 
+        {user && myProfile?.status === 'PENDING' && (
+          <section className="card rounded-3xl p-8 mb-5 text-center border-yellow-500/30 bg-yellow-500/10">
+            <FileClock className="mx-auto mb-3 text-yellow-300" size={42} />
+            <h2 className="text-2xl font-black">Akun menunggu ACC</h2>
+            <p className="text-slate-300 mt-2">Akun Discord kamu sudah masuk database, tapi belum bisa memakai panel sampai Command/Kapolri melakukan ACC dari menu Database Anggota.</p>
+            <p className="text-slate-500 text-sm mt-3">Discord: {myProfile?.discord_name || 'Discord User'} • Status: PENDING</p>
+          </section>
+        )}
+
+        {user && myProfile?.status !== 'PENDING' && (
         <div className="grid lg:grid-cols-[280px_1fr] gap-5">
           <aside className="card rounded-3xl p-3 h-fit sticky top-4">
             {nav.map(([id, Icon, label]) => {
@@ -294,7 +413,7 @@ export default function Page() {
                   <Stat icon={<Users />} title="Anggota Aktif" val={officerCount} />
                   <Stat icon={<Gavel />} title="Total Pasal" val={pasal.length} />
                   <Stat icon={<Activity />} title="Pasal Berat" val={highCases} />
-                  <Stat icon={<FileClock />} title="Audit Log" val={audits.length} />
+                  <Stat icon={<FileClock />} title="Menunggu ACC" val={pendingMembers.length} />
                 </div>
                 <div className="grid lg:grid-cols-2 gap-5">
                   <Panel title="Komposisi Role" icon={<BarChart3 />}>
@@ -329,12 +448,18 @@ export default function Page() {
                   <input className="input" placeholder="Divisi" value={memberForm.divisi} onChange={(e) => setMemberForm({ ...memberForm, divisi: e.target.value })} />
                   <div className="grid grid-cols-2 gap-2">
                     <select className="input" value={memberForm.role} onChange={(e) => setMemberForm({ ...memberForm, role: e.target.value as Role })}>{roles.map((r) => <option key={r}>{r}</option>)}</select>
-                    <select className="input" value={memberForm.status} onChange={(e) => setMemberForm({ ...memberForm, status: e.target.value as Member['status'] })}><option>ACTIVE</option><option>OFF_DUTY</option><option>SUSPENDED</option></select>
+                    <select className="input" value={memberForm.status} onChange={(e) => setMemberForm({ ...memberForm, status: e.target.value as Member['status'] })}><option>PENDING</option><option>ACTIVE</option><option>OFF_DUTY</option><option>SUSPENDED</option></select>
                   </div>
                   <button onClick={saveMember} className="btn btn-primary mt-2">Simpan Anggota</button>
                 </Panel>
                 <Panel title="Database Anggota" icon={<Users />}>
-                  <div className="space-y-2 max-h-[620px] overflow-auto">{members.map((m) => <div key={m.id || m.callsign} className="rounded-2xl bg-slate-950/50 border border-white/10 p-4 flex justify-between gap-3"><div><b>{m.callsign} — {m.nama_rp}</b><p className="text-sm text-slate-400">{m.pangkat} • {m.divisi} • {m.discord_name || 'Belum tertaut Discord'}</p><span className="badge bg-blue-500/10 text-blue-300 mt-2">{m.role}</span></div><div className="flex gap-2"><button onClick={() => setMemberForm(m)}><Edit3 size={17} /></button><button onClick={() => delMember(m.id, m.nama_rp)}><Trash2 size={17} /></button></div></div>)}</div>
+                  {pendingMembers.length > 0 && (
+                    <div className="mb-4 rounded-2xl border border-yellow-500/25 bg-yellow-500/10 p-4">
+                      <h3 className="font-black text-yellow-200 mb-3">Menunggu ACC Akun Baru</h3>
+                      <div className="space-y-2">{pendingMembers.map((m) => <div key={m.id || m.discord_id} className="rounded-xl bg-slate-950/60 border border-white/10 p-3 flex flex-col md:flex-row md:items-center justify-between gap-3"><div><b>{m.discord_name || m.nama_rp}</b><p className="text-xs text-slate-400">Discord ID: {m.discord_id || '-'} • Role awal: {m.role}</p></div><div className="flex gap-2"><button onClick={() => approveMember(m)} className="btn bg-emerald-600"><CheckCircle2 size={16} /> ACC</button><button onClick={() => rejectMember(m)} className="btn bg-red-600"><XCircle size={16} /> Tolak</button></div></div>)}</div>
+                    </div>
+                  )}
+                  <div className="space-y-2 max-h-[620px] overflow-auto">{members.map((m) => <div key={m.id || m.callsign} className="rounded-2xl bg-slate-950/50 border border-white/10 p-4 flex justify-between gap-3"><div><b>{m.callsign} — {m.nama_rp}</b><p className="text-sm text-slate-400">{m.pangkat} • {m.divisi} • {m.discord_name || 'Belum tertaut Discord'}</p><div className="flex flex-wrap gap-2 mt-2"><span className="badge bg-blue-500/10 text-blue-300">{m.role}</span><span className={`badge ${m.status === 'PENDING' ? 'bg-yellow-500/10 text-yellow-300' : m.status === 'SUSPENDED' ? 'bg-red-500/10 text-red-300' : 'bg-emerald-500/10 text-emerald-300'}`}>{m.status}</span></div></div><div className="flex gap-2"><button onClick={() => setMemberForm(m)}><Edit3 size={17} /></button><button onClick={() => delMember(m.id, m.nama_rp)}><Trash2 size={17} /></button></div></div>)}</div>
                 </Panel>
               </div>
             )}
@@ -364,6 +489,7 @@ export default function Page() {
             )}
           </section>
         </div>
+        )}
       </div>
     </main>
   );

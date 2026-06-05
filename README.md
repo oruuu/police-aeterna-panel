@@ -65,3 +65,11 @@ npm run dev
 ## Catatan penting
 
 Tidak ada developer yang bisa menjamin project 100% tanpa bug. Versi ini dibuat rapi sebagai fondasi. Untuk produksi serius, policy Supabase RLS sebaiknya diperketat lagi memakai function role server-side, bukan hanya pembatasan UI.
+
+## Update data pasal & ten-code
+Data Pasal Aeterna dan Sandi Angka sudah dimasukkan ke:
+- `app/page.tsx` sebagai default data UI
+- `supabase/schema.sql` sebagai seed otomatis
+- `supabase/seed.sql` jika hanya ingin update data tanpa reset struktur tabel
+
+Kalau database Supabase kamu sudah berisi data lama, jalankan `supabase/seed.sql` di Supabase SQL Editor supaya data lama ditimpa/diupdate.
